@@ -1,0 +1,38 @@
+
+##Cronos Component
+
+Executes turn-based actions.
+
+Map and player data is kept in memcache store.  Commands are received by Hermes, and placed in a store as they are received.
+
+cronos.php runs on a cron job, and does the following:
+
+1. Load map and player data.
+2. Process commands in turn-actions queue, updating map stored in memcache, noting changes in player-occupied rooms.
+3. Ask Hermes to send update messages to affected players.
+
+
+##Hermes
+
+Sends and receives messages between:
+
+1. Players
+2. World
+
+Unclear exactly how this will work.  Sending a message to a user should be a curl to twitter; easy enough.  Receiving them should come over the Jabber socket.
+
+For initial development, Hermes should be able to be started on a tty, logged to a user, and then all messages for that user would .
+
+
+##Daimon
+
+Executes immediate actions
+
+Is the work-horse for cronos.  Also can be called for certain actions that don't get run on a turn-by-turn basis.
+
+1. Take the action out of the queue
+2. Load the map and player data
+3. Execute action and tell Hermes about the updates.
+
+
+##

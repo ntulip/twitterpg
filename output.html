@@ -1,0 +1,225 @@
+<h1 id="twitterpg">TwitteRPG</h1>
+
+<h2 id="commands:">Commands:</h2>
+
+<h2 id="godirection">go <code>direction</code></h2>
+
+<p>Turn</p>
+
+<p>Move in the <code>direction</code> specified.  If no door in that direction, then no action is taken.</p>
+
+<p>Valid directions are <code>n</code>, <code>s</code>, <code>e</code>, <code>w</code>, of course.</p>
+
+<p>Alias: <code>move</code></p>
+
+<h2 id="saymessage">say <code>message</code></h2>
+
+<p>Free</p>
+
+<p>Everyone in the current room gets messaged with whatever you said.  Ie, if <code>@foo</code> sends <code>d trn say WTF! Who's hitting me?</code> to twitter, and @bar is in the room, then TwitteRPG will send out a message saying <code>d bar @foo WTF! Who's hitting me?</code> to all users in the room.</p>
+
+<p>Making this a free action allows for taunting and cooperative action.</p>
+
+<p>If the user <code>say</code>ing is the only one in the room, then TwitteRPG will send them a message saying something snarky about talking to themselves.</p>
+
+<h2 id="look">look</h2>
+
+<p>Free</p>
+
+<p>return: Description of the current room</p>
+
+<h2 id="getitem">get <code>item</code></h2>
+
+<p>Free</p>
+
+<p>Gets the <code>item</code> specified.</p>
+
+<p>If item is not found, then no action is taken.</p>
+
+<p>If multiple people try to get the same item, then it goes to the first person whose message comes in.</p>
+
+<p>Message is set to everyone in the room updating status: <code>@user got the wrench</code></p>
+
+<h2 id="dropitem">drop <code>item</code></h2>
+
+<p>Free</p>
+
+<p>Drop an item from your inventory, causing it to be immediately <code>get</code>able by other users.</p>
+
+<h2 id="hittarget">hit <code>@target</code></h2>
+
+<p>Turn</p>
+
+<p>Attacks the user specified, causing them to lose 1d4 HP.</p>
+
+<p>Message is sent to everyone in the room: <code>@user hit @target, 2hp</code></p>
+
+<h2 id="followuser">follow <code>@user</code></h2>
+
+<p>If <code>@user</code> performs a go action, then go in the same direction, ignoring any other actions specified this turn.</p>
+
+<p>Cancels any existing follow action.</p>
+
+<p>If <code>@user</code> is not specified or not a valid user in the room, then cancel following.  (<code>follow off</code> will thus cancel the following.)</p>
+
+<h2 id="campn">camp <code>n</code></h2>
+
+<p>For <code>n</code> turns, the user is in &#8220;camping&#8221; state.  They will gain 1 HP per hour camped, or 1 HP per turn, whichever is greater. (Don&#8217;t want the daily players to have to camp for 8 days, that would suck.)</p>
+
+<p>If a user is camping in this room, then the status will show <code>@user is camping</code>.  A camping user&#8217;s inventory is free for the taking with a 10% chance of waking them on every <code>get</code>, and a <code>hit</code> action against the user will automatically do the maximum damage, and will wake them immediately.</p>
+
+<h2 id="joinmap">join <code>map</code></h2>
+
+<p>Turn</p>
+
+<p>If not currently in the game, <code>join</code> will join the <code>map</code> specified.  If the <code>map</code> doesn&#8217;t exist, then a new one by that name will be created.</p>
+
+<p>If no <code>map</code> is specified, then a few existing <code>map</code>s will be returned.</p>
+
+<h2 id="pinguser">ping <code>@user</code></h2>
+
+<p>free</p>
+
+<p>Returns the name of the <code>map</code> that <code>@user</code> is a part of, or <code>@user not found</code>.  Does <em>not</em> tell which room <code>@user</code> is in, however!</p>
+
+<h2 id="hide">hide</h2>
+
+<p>Turn</p>
+
+<p>Can only be done if you&#8217;re alone in a room.  Users who enter the room will only have a 10% chance to see you.  If they see you, they can <code>hit</code> you to make you visible to others.</p>
+
+<p>If you <code>hit</code> a user while hidden, it automatically does the maximum damage, but ends the hiding.</p>
+
+<h2 id="map">map</h2>
+
+<p>Free (max 1ce per turn)</p>
+
+<p>Sends an ASCII map to the user&#8217;s email address, showing the areas that they have explored, with a * at the current location.</p>
+
+<h2 id="die">die</h2>
+
+<p>Free</p>
+
+<p>Immediately kill your character, dropping all items in the current <code>room</code> and leaving the <code>map</code>.</p>
+
+<h2 id="inv">inv</h2>
+
+<p>Free</p>
+
+<p>List the currently held inventory.</p>
+
+<h2 id="score">score</h2>
+
+<p>Free</p>
+
+<p>return the current score for the user</p>
+
+<p>Every item has a score value.  Killing another player is worth whatever their current score is (you steal their points, basically.)</p>
+
+<h1 id="otherstuff">Other stuff</h1>
+
+<p>Dying calls the <code>score</code> action, and also saves it to the database to show on top lists and gather props.</p>
+
+<p>Perhaps there could be a page for each user that shows a list of their latest actions, their latest scores, etc.  How much to show is only determined by how much is saved.</p>
+
+<p>The Jabber/XMPP protocol would allow a much more responsive experience, which would be especially important for the free actions.  Rate limiting is not a problem: sending and receiving is free.  Only authenticated requests (including private message gathering) are problematic.</p>
+
+<h1 id="ideas">Ideas</h1>
+
+<p>Perhaps if you and another user follow one another on Twitter, it would make sense for you to be able to get the exact room from a <code>ping</code> action, or even have a <code>port</code> command that will teleport you into their current room and <code>map</code> (and shake off anyone following you!)</p>
+
+<p>What kind of treasure?  Could you find treasure that will up your attack or defense power (implementation?)  Is the inventory limited to a set number of items?  Maybe &#8220;gold&#8221; could be one sort of treasure that is &#8220;stackable&#8221; in that it only takes up one slot in the inventory, but can get bigger and bigger.  1GP = 1point, <code>get gold</code> will pick up whatever gold is in the room and add it to the total, etc.</p>
+
+<p>Descriptions of rooms have to be quite terse, but should still evoke some kind of visual image.</p>
+
+<p>Creating a new <code>map</code> creates a random arrangement of <code>room</code>s.  When all the users in a <code>map</code> die, it is deleted from the system.</p>
+
+<p>When you leave, you have either the status of &#8220;dead&#8221; or &#8220;not dead.&#8221;  If your exit status is &#8220;not dead&#8221; then you get a score bonus in the final tally.  You get a status of &#8220;not dead&#8221; by exploring the entire map, collecting all treasure, and being the last man standing.  (At which point, the game ends with <strong>Congratulations! You&#8217;re not dead!</strong>)</p>
+
+<p>Need a catchier name.</p>
+
+<p>The following shorthand should be allowed:</p>
+
+<ul>
+<li>m go/move</li>
+<li>l look</li>
+<li>g get</li>
+<li>i inventory</li>
+<li>h hit</li>
+<li>f follow</li>
+<li>d drop</li>
+<li>c camp</li>
+<li>j join</li>
+<li>p ping</li>
+<li>s say</li>
+<li>sc score</li>
+<li>hi hide</li>
+<li>ma map</li>
+<li>di die</li>
+</ul>
+
+<h1 id="data">data</h1>
+
+<p>Each <code>user</code> has (at least) the following items:</p>
+
+<ul>
+<li>twitter_id</li>
+<li>hp</li>
+<li>score</li>
+<li>inventory of 6 <code>item</code>s</li>
+<li>location</li>
+<li>map</li>
+<li>status (hidden, camping, active)</li>
+<li>explored (list of <code>room</code>s explored in the current map)</li>
+</ul>
+
+<p>Each <code>item</code> has the following fields:</p>
+
+<ul>
+<li>id</li>
+<li>description</li>
+<li>points</li>
+</ul>
+
+<p>Each <code>room</code> has the following fields:</p>
+
+<ul>
+<li>id</li>
+<li>north (roomid or -1 for no door or 0 for a room that has not yet been created)</li>
+<li>south</li>
+<li>east</li>
+<li>west</li>
+<li>description</li>
+<li>inventory (list of <code>item</code>s that are gettable)</li>
+<li>coordinates (x and y coordinates on the map)</li>
+<li>map</li>
+</ul>
+
+<p>Each <code>map</code> has the following fields;</p>
+
+<ul>
+<li>id</li>
+<li>name</li>
+<li>layout - ASCII representation of the map.  <code>room</code>s that haven&#8217;t yet been created could be represented with <code>*</code>s.  For example:    </li>
+</ul>
+
+<div>
+<code><pre> # #   ### ### ### 
+##### ## # # # # ##
+  ##  ### # #### * ##
+  #### #####   *** #
+  #    #           #
+  ###***************<pre></code>
+</div>
+
+<h2 id="trackingdata">Tracking data</h2>
+
+<p>The amount of data that could be tracked is virtually unlimited, but tracking more data means more work and more storage.  Of course, if monetized and popular, more data means more page views which means more <strong style="color:green">$$$</strong> for the operators of the site.</p>
+
+<p>Some ideas:</p>
+
+<ul>
+<li>user scores with date and time - Users that finish &#8220;not dead&#8221; get automatic front-page listing.</li>
+<li>zeitgeist of the active rooms in each map</li>
+<li>user history of each adventure</li>
+</ul>

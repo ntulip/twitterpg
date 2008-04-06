@@ -1,0 +1,220 @@
+#TwitteRPG
+
+##Commands:
+
+##go `direction`
+
+Turn
+
+Move in the `direction` specified.  If no door in that direction, then no action is taken.
+
+Valid directions are `n`, `s`, `e`, `w`, of course.
+
+Alias: `move`
+
+##say `message`
+
+Free
+
+Everyone in the current room gets messaged with whatever you said.  Ie, if `@foo` sends `d trn say WTF! Who's hitting me?` to twitter, and @bar is in the room, then TwitteRPG will send out a message saying `d bar @foo WTF! Who's hitting me?` to all users in the room.
+
+Making this a free action allows for taunting and cooperative action.
+
+If the user `say`ing is the only one in the room, then TwitteRPG will send them a message saying something snarky about talking to themselves.
+
+##look
+
+Free
+
+return: Description of the current room
+
+##get `item`
+
+Free
+
+Gets the `item` specified.
+
+If item is not found, then no action is taken.
+
+If multiple people try to get the same item, then it goes to the first person whose message comes in.
+
+Message is set to everyone in the room updating status: `@user got the wrench`
+
+##drop `item`
+
+Free
+
+Drop an item from your inventory, causing it to be immediately `get`able by other users.
+
+##hit `@target`
+
+Turn
+
+Attacks the user specified, causing them to lose 1d4 HP.
+
+Message is sent to everyone in the room: `@user hit @target, 2hp`
+
+##follow `@user`
+
+If `@user` performs a go action, then go in the same direction, ignoring any other actions specified this turn.
+
+Cancels any existing follow action.
+
+If `@user` is not specified or not a valid user in the room, then cancel following.  (`follow off` will thus cancel the following.)
+
+##camp `n`
+
+For `n` turns, the user is in "camping" state.  They will gain 1 HP per hour camped, or 1 HP per turn, whichever is greater. (Don't want the daily players to have to camp for 8 days, that would suck.)
+
+If a user is camping in this room, then the status will show `@user is camping`.  A camping user's inventory is free for the taking with a 10% chance of waking them on every `get`, and a `hit` action against the user will automatically do the maximum damage, and will wake them immediately.
+
+##join `map`
+
+Turn
+
+If not currently in the game, `join` will join the `map` specified.  If the `map` doesn't exist, then a new one by that name will be created.
+
+If no `map` is specified, then a few existing `map`s will be returned.
+
+##ping `@user`
+
+free
+
+Returns the name of the `map` that `@user` is a part of, or `@user not found`.  Does *not* tell which room `@user` is in, however!
+
+##hide
+
+Turn
+
+Can only be done if you're alone in a room.  Users who enter the room will only have a 10% chance to see you.  If they see you, they can `hit` you to make you visible to others.
+
+If you `hit` a user while hidden, it automatically does the maximum damage, but ends the hiding.
+
+##map
+
+Free (max 1ce per turn)
+
+Sends an ASCII map to the user's email address, showing the areas that they have explored, with a * at the current location.
+
+##die
+
+Free
+
+Immediately kill your character, dropping all items in the current `room` and leaving the `map`.
+
+##inv
+
+Free
+
+List the currently held inventory.
+
+##score
+
+Free
+
+return the current score for the user
+
+Every item has a score value.  Killing another player is worth whatever their current score is (you steal their points, basically.)
+
+#Other stuff
+
+Dying calls the `score` action, and also saves it to the database to show on top lists and gather props.
+
+Perhaps there could be a page for each user that shows a list of their latest actions, their latest scores, etc.  How much to show is only determined by how much is saved.
+
+The Jabber/XMPP protocol would allow a much more responsive experience, which would be especially important for the free actions.  Rate limiting is not a problem: sending and receiving is free.  Only authenticated requests (including private message gathering) are problematic.
+
+#Ideas
+
+Perhaps if you and another user follow one another on Twitter, it would make sense for you to be able to get the exact room from a `ping` action, or even have a `port` command that will teleport you into their current room and `map` (and shake off anyone following you!)
+
+What kind of treasure?  Could you find treasure that will up your attack or defense power (implementation?)  Is the inventory limited to a set number of items?  Maybe "gold" could be one sort of treasure that is "stackable" in that it only takes up one slot in the inventory, but can get bigger and bigger.  1GP = 1point, `get gold` will pick up whatever gold is in the room and add it to the total, etc.
+
+Descriptions of rooms have to be quite terse, but should still evoke some kind of visual image.
+
+Creating a new `map` creates a random arrangement of `room`s.  When all the users in a `map` die, it is deleted from the system.
+
+When you leave, you have either the status of "dead" or "not dead."  If your exit status is "not dead" then you get a score bonus in the final tally.  You get a status of "not dead" by exploring the entire map, collecting all treasure, and being the last man standing.  (At which point, the game ends with **Congratulations! You're not dead!**)
+
+Need a catchier name.
+
+The following shorthand should be allowed:
+
+* m go/move
+* l look
+* g get
+* i inventory
+* h hit
+* f follow
+* d drop
+* c camp
+* j join
+* p ping
+* s say
+* sc score
+* hi hide
+* ma map
+* di die
+
+#data
+
+Each `user` has (at least) the following items:
+
+* twitter_id
+* hp
+* score
+* inventory of 6 `item`s
+* location
+* map
+* status (hidden, camping, active)
+* explored (list of `room`s explored in the current map)
+
+Each `item` has the following fields:
+
+* id
+* description
+* points
+
+Each `room` has the following fields:
+
+* id
+* north (roomid or -1 for no door or 0 for a room that has not yet been created)
+* south
+* east
+* west
+* description
+* inventory (list of `item`s that are gettable)
+* coordinates (x and y coordinates on the map)
+* map
+
+Each `map` has the following fields;
+
+* id
+* name
+* layout - ASCII representation of the map.  `room`s that haven't yet been created could be represented with `*`s.  For example:	
+
+<div>
+<code><pre> # #   ### ### ### 
+##### ## # # # # ##
+  ##  ### # #### * ##
+  #### #####   *** #
+  #    #           #
+  ###***************<pre></code>
+</div>
+
+
+
+
+##Tracking data
+
+The amount of data that could be tracked is virtually unlimited, but tracking more data means more work and more storage.  Of course, if monetized and popular, more data means more page views which means more <strong style="color:green">$$$</strong> for the operators of the site.
+
+Some ideas:
+
+* user scores with date and time - Users that finish "not dead" get automatic front-page listing.
+* zeitgeist of the active rooms in each map
+* user history of each adventure
+
+
+
+
