@@ -1,0 +1,60 @@
+Need a persistent daemon running to control communication?  Or are web services enough?
+
+Communication is two things: sending and receiving.
+
+Sending needs to be done to everyone on regular intervals, or when an event occurs.
+
+1. curl to twitter
+ + easy
+ + kind of, like, the point of this whole thing.
+ - twitter sucks sometimes.
+==> should be the primary send interface, 
+
+2. email
+ + also easy
+ + spammy
+ - not likely to be used much
+==> nice-to-have, not ideal as primary method
+
+3. Jabber
+ - big unknown
+ +- See issues/advantages of Jabber receiving, below
+ + very responsive
+==> nice to have, but not necessary
+
+Receiving is more tricky. Options:
+
+1. 2-second cron to fetch private messages.
+ + relatively simple and easily implemented
+ + zero persistence, no risk of going down (if it does, just start it up again, no big.)
+ + server-heavy
+ + easy to handle twitter message back-up
+ - not very responsive
+ - subject to twitter's oddities
+==> doable, easy, probably the best first-pass approach.
+
+2. Open Jabber socket, and leave it open.
+ - subject to twitter's oddities
+ - not as simple to implement
+ - requires persistent daemon process to stay connected.
+ + cool/interesting
+ + would allow users to add TwitteRPG to their contacts and interface directly in a chat session. 
+ + very responsive, event-based
+==> need more info on how hard it would be to develop. Bit of a question mark.
+
+3. Web service that users can hit directly.
+ + easily implemented
+ + allows for further innovation by other clients.
+ - not a good single-solution, since twitter won't send tweets to a ws.
+==> nice to have.
+
+4. email
+ - way unresponsive
+ - subject to twitter's oddities as well as the inherent flakiness of email delays
+ + straightforward to implement with postfix
+ - tedious to implement with postfix
+ - spammable
+==> not worth it.
+
+5. Something else...?
+
