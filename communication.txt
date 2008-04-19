@@ -1,3 +1,141 @@
+Use the xmp-php library: http://code.google.com/p/xmpphp/
+A cron kicks off a new php script every so often that does the following:
+
+connect to XMPP account
+set status to "initializing"
+listen for messages while not disconnected
+foreach message:
+	
+	if now >= TURN_END && status = "awaiting commands"
+		process queue actions
+		send end of turn status
+		set TURN_END to TURN_END + TURN_LENGTH
+	
+	if message is a command, 
+		if status = "initializing"
+			add command to initialize queue
+		if status = "awaiting commands"
+			if command is immediate,
+				update status
+				send response
+			else
+				add command to turn queue
+	
+	if message is a status update from a twitterpg engine "initializing", then
+		save queue to central queue
+		change status to "transferring control"
+		disconnect
+		
+	if message is a status update from a twitterpg engine "transferring control", then
+		load turn actions from central queue (filesystem?)
+		process initialization queue
+		set status to "awaiting commands"
+		
+Ok, I've just thrown four different approaches to transferring control from one connection to another, and all of them will have a potential time period where a message will be dropped or processed out of order.  Maybe a little bit of irregularity is just keeping in the spirit of twitter...
+
+
+
+The cron length for the main twitterpg process should be long enough to reduce overhead of repeatedly checking the central queue, but often enough to mitigate php's leaky memory.  If there is a presence update for a second TwitteRPG with a status of "awaiting commands", then this one will disconnect immediately.
+
+A "turn-cron" will run to make an xmpp connection, set its status to "new turn" and immediately disconnect.  When the main game engine sees this, it processes the turn actions queue.
+
+
+
+A twitter user can set an option to identify their IM id on any xmpp/jabber system.
+
+Per-user settings object:
+{
+	"id" : "UpdateMethods",
+	"schema" : "schema",
+	"description" : "The settings for update methods, changed/viewed via the 'update' command.",
+	
+	"type":"object",
+	"properties" : {
+		"twitter" : {
+			"basis" : "UpdateMethod",
+			"description" : "The user's ID on twitter.",
+			"properties" : {
+				"id" : {
+					"required" : true
+				},
+			},
+			"messageType" : {
+				"type" : "string",
+				"options" : ["@", "d "],
+				"default" : "@"
+			}
+		},
+		"im" : {
+			"basis" : "UpdateMethod",
+			"description" : "A jabber/GTalk/LJChat ID, if supplied."
+		},
+		"email" : {
+			"basis" : "UpdateMethod",
+			"description" : "Email address for the user."
+		}
+	}
+}
+{
+	"id" : "UpdateMethod",
+	"schema" : "schema",
+	"description" : "A method of updating a user.",
+	
+	"type" : "object",
+	"properties" : {
+		"id" : {
+			"required" : false,
+			"default" : "",
+			"type": "string",
+			"description" : "The ID of the user."
+		},
+		"live" : {
+			"type" : "boolean",
+			"default" : true
+		},
+		"identified" : {
+			"type" : "boolean",
+			"default" : false
+		}
+	}
+}
+
+send_update (user, message) {
+	for each user->contact as method => um
+		if um->id && um->live then
+			send_$method(user, message)
+}
+send_twitter (user, message) {
+	t = user->contact->twitter
+	send_jabber twitter t->messageType$t->id message
+}
+send_im (user, message) {
+	use the xmpphp object to send the message to user->contact->im->id
+}
+send_email () { mail(...) }
+
+Commands:
+update <method> id
+	returns the currently set id for that contact method
+update <method> id (the_id)
+	set the <method>->id to the_id
+update <method> live
+	returns the "live" status of user's update setting for that method.
+update <method> (on|off)
+	turn  updates on or off for <method> (warns if no id set)
+
+
+If a user has identified an xmpp id, then any messages from that im id will be treated exactly the same as if they came from a twitter direct message from the user.
+
+
+
+
+
+
+
+
+
+
+
 Need a persistent daemon running to control communication?  Or are web services enough?
 
 Communication is two things: sending and receiving.
