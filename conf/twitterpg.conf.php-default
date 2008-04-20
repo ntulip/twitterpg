@@ -13,6 +13,11 @@ if ( !defined('CONFIG_LOADED') ) {
 	define('XMPP_PORT', 5222);
 	define('XMPP_SERVER', 'gmail.com');
 	
+	define('DAL_HOST', 'mysqlhost');
+	define('DAL_USERNAME', 'mysqluser');
+	define('DAL_PASSWORD', 'mysqlpass');
+	define('DAL_DATABASE', 'databasename');
+	
 	define('CONFIG_LOADED',true);
 }
 
