@@ -1,0 +1,19 @@
+<?php
+
+# This file sets any configurations that the system needs.
+# Rename to twitterpg.conf.php, and fill in appropriate values.
+# NB: DO NOT add the live twitterpg.conf.php to source control!
+
+if ( !defined('CONFIG_LOADED') ) {
+	
+	define('XMPP_USERNAME', 'gtalk_username');
+	define('XMPP_PASSWORD', 'gtalk_password');
+	
+	define('XMPP_HOST', 'talk.google.com');
+	define('XMPP_PORT', 5222);
+	define('XMPP_SERVER', 'gmail.com');
+	
+	define('CONFIG_LOADED',true);
+}
+
+?>
