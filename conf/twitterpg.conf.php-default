@@ -4,6 +4,10 @@
 # Rename to twitterpg.conf.php, and fill in appropriate values.
 # NB: DO NOT add the live twitterpg.conf.php to source control!
 
+# It would be preferable to put this in a PHP ini file, so it all
+# gets loaded up once and saves the repeated defines.
+# For now, with no proper packaging, that's tricky, and this is easy.
+
 if ( !defined('CONFIG_LOADED') ) {
 	
 	define('XMPP_USERNAME', 'gtalk_username');
