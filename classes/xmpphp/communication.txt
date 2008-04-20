@@ -1,0 +1,244 @@
+Simpler approach for handing off control from one engine process to the next:
+
+Don't manage the turn queue in the xmpp client.  Just strip out the username and the command, and pass it along immediately to a command dispatcher.  The xmpp client should be a dumb client who knows nothing about the game or how it works, but just manages the connections and cleans up the input a bit.
+
+Command flow algorithm
+
+Connect XMPP
+presence('ready')
+PROCESSING = false
+AWAIT_TRANSFER = false
+foreach ('presence','message') while not disconnected:
+	if presence:
+		if from another instance, PROCESSING, and status = "ready":
+			presence("transferring")
+		if from another instance, !PROCESSING, and status = "listening":
+			AWAIT_TRANSFER = true
+		if from another instance, and status = "transferring"
+			presence("listening")
+			PROCESSING = true
+	if message:
+		if !PROCESSING && !AWAIT_TRANSFER:
+			# first instance, or previous instance crashed
+			PROCESSING = true
+			presence("listening")
+		if PROCESSING:
+			format and send to command dispatcher
+	if presence = "transferring":
+		disconnect
+
+The issue is that the streams come in batches.  So, the "transferring" message will get picked up AFTER the batch of messages that came along with the "ready" status.  Set the presence immediately, process the remaining messages, and then disconnect.
+
+There's still a race condition window where duplicate commands can creep in, but it's shrunk considerably by not having to maintain a turn queue in the xmpp client.
+			
+
+
+
+
+
+
+Use the xmp-php library: http://code.google.com/p/xmpphp/
+A cron kicks off a new php script every so often that does the following:
+
+connect to XMPP account
+set status to "initializing"
+listen for messages while not disconnected
+foreach message:
+	
+	if now >= TURN_END && status = "awaiting commands"
+		process queue actions
+		send end of turn status
+		set TURN_END to TURN_END + TURN_LENGTH
+	
+	if message is a command, 
+		if status = "initializing"
+			add command to initialize queue
+		if status = "awaiting commands"
+			if command is immediate,
+				update status
+				send response
+			else
+				add command to turn queue
+	
+	if message is a status update from a twitterpg engine "initializing", then
+		save queue to central queue
+		change status to "transferring control"
+		disconnect
+		
+	if message is a status update from a twitterpg engine "transferring control", then
+		load turn actions from central queue (filesystem?)
+		process initialization queue
+		set status to "awaiting commands"
+		
+Ok, I've just thrown four different approaches to transferring control from one connection to another, and all of them will have a potential time period where a message will be dropped or processed out of order.  Maybe a little bit of irregularity is just keeping in the spirit of twitter...
+
+
+
+
+
+
+
+
+
+
+The cron length for the main twitterpg process should be long enough to reduce overhead of repeatedly checking the central queue, but often enough to mitigate php's leaky memory.  If there is a presence update for a second TwitteRPG with a status of "awaiting commands", then this one will disconnect immediately.
+
+A "turn-cron" will run to make an xmpp connection, set its status to "new turn" and immediately disconnect.  When the main game engine sees this, it processes the turn actions queue.
+
+
+
+A twitter user can set an option to identify their IM id on any xmpp/jabber system.
+
+Per-user settings object:
+{
+	"id" : "UpdateMethods",
+	"schema" : "schema",
+	"description" : "The settings for update methods, changed/viewed via the 'update' command.",
+	
+	"type":"object",
+	"properties" : {
+		"twitter" : {
+			"basis" : "UpdateMethod",
+			"description" : "The user's ID on twitter.",
+			"properties" : {
+				"id" : {
+					"required" : true
+				},
+			},
+			"messageType" : {
+				"type" : "string",
+				"options" : ["@", "d "],
+				"default" : "@"
+			}
+		},
+		"im" : {
+			"basis" : "UpdateMethod",
+			"description" : "A jabber/GTalk/LJChat ID, if supplied."
+		},
+		"email" : {
+			"basis" : "UpdateMethod",
+			"description" : "Email address for the user."
+		}
+	}
+}
+{
+	"id" : "UpdateMethod",
+	"schema" : "schema",
+	"description" : "A method of updating a user.",
+	
+	"type" : "object",
+	"properties" : {
+		"id" : {
+			"required" : false,
+			"default" : "",
+			"type": "string",
+			"description" : "The ID of the user."
+		},
+		"live" : {
+			"type" : "boolean",
+			"default" : true
+		},
+		"identified" : {
+			"type" : "boolean",
+			"default" : false
+		}
+	}
+}
+
+send_update (user, message) {
+	for each user->contact as method => um
+		if um->id && um->live then
+			send_$method(user, message)
+}
+send_twitter (user, message) {
+	t = user->contact->twitter
+	send_jabber twitter t->messageType$t->id message
+}
+send_im (user, message) {
+	use the xmpphp object to send the message to user->contact->im->id
+}
+send_email () { mail(...) }
+
+Commands:
+update <method> id
+	returns the currently set id for that contact method
+update <method> id (the_id)
+	set the <method>->id to the_id
+update <method> live
+	returns the "live" status of user's update setting for that method.
+update <method> (on|off)
+	turn  updates on or off for <method> (warns if no id set)
+
+
+If a user has identified an xmpp id, then any messages from that im id will be treated exactly the same as if they came from a twitter direct message from the user.
+
+
+
+
+
+
+
+
+
+
+
+Need a persistent daemon running to control communication?  Or are web services enough?
+
+Communication is two things: sending and receiving.
+
+Sending needs to be done to everyone on regular intervals, or when an event occurs.
+
+1. curl to twitter
+ + easy
+ + kind of, like, the point of this whole thing.
+ - twitter sucks sometimes.
+==> should be the primary send interface, 
+
+2. email
+ + also easy
+ + spammy
+ - not likely to be used much
+==> nice-to-have, not ideal as primary method
+
+3. Jabber
+ - big unknown
+ +- See issues/advantages of Jabber receiving, below
+ + very responsive
+==> nice to have, but not necessary
+
+Receiving is more tricky. Options:
+
+1. 2-second cron to fetch private messages.
+ + relatively simple and easily implemented
+ + zero persistence, no risk of going down (if it does, just start it up again, no big.)
+ + server-heavy
+ + easy to handle twitter message back-up
+ - not very responsive
+ - subject to twitter's oddities
+==> doable, easy, probably the best first-pass approach.
+
+2. Open Jabber socket, and leave it open.
+ - subject to twitter's oddities
+ - not as simple to implement
+ - requires persistent daemon process to stay connected.
+ + cool/interesting
+ + would allow users to add TwitteRPG to their contacts and interface directly in a chat session. 
+ + very responsive, event-based
+==> need more info on how hard it would be to develop. Bit of a question mark.
+
+3. Web service that users can hit directly.
+ + easily implemented
+ + allows for further innovation by other clients.
+ - not a good single-solution, since twitter won't send tweets to a ws.
+==> nice to have.
+
+4. email
+ - way unresponsive
+ - subject to twitter's oddities as well as the inherent flakiness of email delays
+ + straightforward to implement with postfix
+ - tedious to implement with postfix
+ - spammable
+==> not worth it.
+
+5. Something else...?
+
