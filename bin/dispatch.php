@@ -1,6 +1,6 @@
+#!/usr/bin/php
 <?php
 
-array_shift($argv);
-var_dump($argv);
+var_dump(json_decode($argv[1]));
 
 ?>
