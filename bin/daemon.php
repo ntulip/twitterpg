@@ -38,9 +38,10 @@ for (
 		switch ($type) {
 			case 'presence':
 				$other = explode('/', $pl['from']);
+				if (DEBUG) "\npresence: {$pl['from']} ";
 				if ( $other[0] === $me[0] && @$other[1] !== $me[1] ) {
 					// a sibling daemon!
-					// echo "sibling! " . implode(" ", $pl);
+					if (DEBUG) echo "sibling! " . implode(" ", $pl);
 					$first_daemon = false;
 					if (!$processing && $pl['status'] === DAEMON_LISTENING) {
 						$awaiting_transfer = true;
@@ -61,19 +62,18 @@ for (
 				}
 			break;
 			case 'message':
-				if (!trim($pl['body'])) {
-					break;
-				}
-				
 				// a message before seeing another daemon. Most likely the first one.
 				// This is a race condition.  Dupes are better than lost actions.
 				if (!$awaiting_transfer) {
 					$processing = true;
 				}
+				if (!trim($pl['body']) || !$processing) {
+					break;
+				}
 				if ($pl['from'] === "twitter@twitter.com") {
 					$message = explode("\n", $pl['body']);
 					$user = trim(str_replace(array('Direct from',':'),'',$message[0]));
-					$command = $message[1];
+					$command = trim($message[1]);
 				} else {
 					$user = explode('/', $pl['from']);
 					$user = $user[0];
