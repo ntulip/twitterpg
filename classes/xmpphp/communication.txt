@@ -30,11 +30,6 @@ foreach ('presence','message') while not disconnected:
 The issue is that the streams come in batches.  So, the "transferring" message will get picked up AFTER the batch of messages that came along with the "ready" status.  Set the presence immediately, process the remaining messages, and then disconnect.
 
 There's still a race condition window where duplicate commands can creep in, but it's shrunk considerably by not having to maintain a turn queue in the xmpp client.
-			
-
-
-
-
 
 
 Use the xmp-php library: http://code.google.com/p/xmpphp/
