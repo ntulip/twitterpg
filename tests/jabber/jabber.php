@@ -10,6 +10,8 @@
  * Send "quit" to end the script
  */
 
+// Test Comment for git commit
+
 include("xmpphp/xmpp.php");
 
 // test account information
